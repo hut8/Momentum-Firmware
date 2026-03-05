@@ -80,14 +80,14 @@ void desktop_scene_card_scan_on_enter(void* context) {
         desktop->scene_manager, DesktopSceneCardScan, (uint32_t)(uintptr_t)state);
 
     if(!desktop_card_key_load(&state->card_key)) {
-        popup_set_header(desktop->popup, "No card set", 64, 20, AlignCenter, AlignCenter);
-        popup_set_text(desktop->popup, "Set card in\nDesktop Settings", 64, 40, AlignCenter, AlignCenter);
+        popup_set_header(desktop->popup, "No tag set", 64, 20, AlignCenter, AlignCenter);
+        popup_set_text(desktop->popup, "Set tag in\nDesktop Settings", 64, 40, AlignCenter, AlignCenter);
         view_dispatcher_switch_to_view(desktop->view_dispatcher, DesktopViewIdPopup);
         return;
     }
 
-    popup_set_header(desktop->popup, "Present Card", 64, 20, AlignCenter, AlignCenter);
-    popup_set_text(desktop->popup, "Waiting for card...", 64, 40, AlignCenter, AlignCenter);
+    popup_set_header(desktop->popup, "Present Tag", 64, 20, AlignCenter, AlignCenter);
+    popup_set_text(desktop->popup, "Waiting for tag...", 64, 40, AlignCenter, AlignCenter);
     view_dispatcher_switch_to_view(desktop->view_dispatcher, DesktopViewIdPopup);
 
     state->timeout_timer = furi_timer_alloc(
@@ -139,8 +139,8 @@ bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
             } else {
                 notification_message(notifications, &sequence_error);
                 furi_record_close(RECORD_NOTIFICATION);
-                popup_set_header(desktop->popup, "Wrong Card!", 64, 20, AlignCenter, AlignCenter);
-                popup_set_text(desktop->popup, "Card does not match", 64, 40, AlignCenter, AlignCenter);
+                popup_set_header(desktop->popup, "Wrong Tag!", 64, 20, AlignCenter, AlignCenter);
+                popup_set_text(desktop->popup, "Tag does not match", 64, 40, AlignCenter, AlignCenter);
             }
             consumed = true;
             break;
@@ -169,10 +169,10 @@ bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
                     notification_message(notifications, &sequence_error);
                     furi_record_close(RECORD_NOTIFICATION);
                     popup_set_header(
-                        desktop->popup, "Wrong Card!", 64, 20, AlignCenter, AlignCenter);
+                        desktop->popup, "Wrong Tag!", 64, 20, AlignCenter, AlignCenter);
                     popup_set_text(
                         desktop->popup,
-                        "Card does not match",
+                        "Tag does not match",
                         64,
                         40,
                         AlignCenter,

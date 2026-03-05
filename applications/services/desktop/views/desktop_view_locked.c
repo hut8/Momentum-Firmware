@@ -120,7 +120,7 @@ void desktop_view_locked_draw_lockscreen(Canvas* canvas, void* m) {
         canvas_set_font(canvas, FontSecondary);
         if(model->pin_locked && model->card_key_set) {
             elements_bubble_str(
-                canvas, 2, 14 + y, "  UP=PIN  OK=Card", AlignRight, AlignBottom);
+                canvas, 2, 14 + y, "  UP=PIN  OK=Tag", AlignRight, AlignBottom);
         } else if(model->pin_locked) {
             elements_bubble_str(
                 canvas, 12, 14 + y, "  Press   \nto unlock!", AlignRight, AlignBottom);

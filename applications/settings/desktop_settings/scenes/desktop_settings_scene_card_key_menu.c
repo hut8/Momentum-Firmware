@@ -16,14 +16,14 @@ void desktop_settings_scene_card_key_menu_on_enter(void* context) {
 
     submenu_add_item(
         submenu,
-        "Scan NFC Card",
+        "Scan NFC Tag",
         DesktopSettingsCustomEventScanNfc,
         desktop_settings_scene_card_key_menu_submenu_callback,
         app);
 
     submenu_add_item(
         submenu,
-        "Scan RFID Card",
+        "Scan RFID Tag",
         DesktopSettingsCustomEventScanRfid,
         desktop_settings_scene_card_key_menu_submenu_callback,
         app);
@@ -42,7 +42,7 @@ void desktop_settings_scene_card_key_menu_on_enter(void* context) {
         desktop_settings_scene_card_key_menu_submenu_callback,
         app);
 
-    submenu_set_header(submenu, "Set Unlock Card");
+    submenu_set_header(submenu, "Set Unlock Tag");
     view_dispatcher_switch_to_view(app->view_dispatcher, DesktopSettingsAppViewMenu);
 }
 

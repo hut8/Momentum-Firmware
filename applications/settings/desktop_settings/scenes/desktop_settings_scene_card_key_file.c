@@ -89,11 +89,11 @@ void desktop_settings_scene_card_key_file_on_enter(void* context) {
 
         if(load_success) {
             desktop_card_key_save(&app->card_key_buffer);
-            popup_set_header(app->popup, "Card Saved!", 64, 20, AlignCenter, AlignCenter);
+            popup_set_header(app->popup, "Tag Saved!", 64, 20, AlignCenter, AlignCenter);
             popup_set_text(
                 app->popup,
-                card_type == DesktopCardKeyTypeNfc ? "NFC card set\nas unlock key" :
-                                                     "RFID card set\nas unlock key",
+                card_type == DesktopCardKeyTypeNfc ? "NFC tag set\nas unlock key" :
+                                                     "RFID tag set\nas unlock key",
                 64,
                 40,
                 AlignCenter,
@@ -102,7 +102,7 @@ void desktop_settings_scene_card_key_file_on_enter(void* context) {
         } else {
             popup_set_header(app->popup, "Error!", 64, 20, AlignCenter, AlignCenter);
             popup_set_text(
-                app->popup, "Failed to load\ncard data", 64, 40, AlignCenter, AlignCenter);
+                app->popup, "Failed to load\ntag data", 64, 40, AlignCenter, AlignCenter);
             view_dispatcher_switch_to_view(app->view_dispatcher, DesktopSettingsAppViewIdPopup);
         }
     } else {

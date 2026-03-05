@@ -44,20 +44,20 @@ void desktop_settings_scene_pin_menu_on_enter(void* context) {
     if(!desktop_card_key_is_set()) {
         submenu_add_item(
             submenu,
-            "Set Unlock Card",
+            "Set Unlock Tag",
             DesktopSettingsCustomEventSetCardKey,
             desktop_settings_scene_pin_menu_submenu_callback,
             app);
     } else {
         submenu_add_item(
             submenu,
-            "Remove Unlock Card",
+            "Remove Unlock Tag",
             DesktopSettingsCustomEventRemoveCardKey,
             desktop_settings_scene_pin_menu_submenu_callback,
             app);
     }
 
-    submenu_set_header(app->submenu, "PIN & Card Settings");
+    submenu_set_header(app->submenu, "Lock Setup");
     submenu_set_selected_item(app->submenu, app->pin_menu_idx);
     view_dispatcher_switch_to_view(app->view_dispatcher, DesktopSettingsAppViewMenu);
 }
@@ -93,8 +93,8 @@ bool desktop_settings_scene_pin_menu_on_event(void* context, SceneManagerEvent e
             break;
         case DesktopSettingsCustomEventRemoveCardKey:
             desktop_card_key_reset();
-            scene_manager_search_and_switch_to_previous_scene(
-                app->scene_manager, DesktopSettingsAppScenePinMenu);
+            scene_manager_previous_scene(app->scene_manager);
+            scene_manager_next_scene(app->scene_manager, DesktopSettingsAppScenePinMenu);
             consumed = true;
             break;
         default:

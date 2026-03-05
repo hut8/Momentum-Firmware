@@ -45,7 +45,7 @@ void desktop_settings_scene_card_key_scan_nfc_on_enter(void* context) {
     popup_set_header(app->popup, "Scanning NFC", 64, 14, AlignCenter, AlignCenter);
     popup_set_text(
         app->popup,
-        "Place card on\nFlipper's back",
+        "Place tag on\nFlipper's back",
         64,
         38,
         AlignCenter,
@@ -104,7 +104,7 @@ bool desktop_settings_scene_card_key_scan_nfc_on_event(void* context, SceneManag
             static char detail_text[80];
             snprintf(detail_text, sizeof(detail_text), "UID: %s", uid_str);
 
-            popup_set_header(app->popup, "NFC Card Saved!", 64, 14, AlignCenter, AlignCenter);
+            popup_set_header(app->popup, "NFC Tag Saved!", 64, 14, AlignCenter, AlignCenter);
             popup_set_text(app->popup, detail_text, 64, 38, AlignCenter, AlignCenter);
             consumed = true;
         }

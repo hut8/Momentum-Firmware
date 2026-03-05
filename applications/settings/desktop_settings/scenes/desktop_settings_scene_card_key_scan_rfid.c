@@ -64,7 +64,7 @@ void desktop_settings_scene_card_key_scan_rfid_on_enter(void* context) {
     popup_set_header(app->popup, "Scanning RFID", 64, 14, AlignCenter, AlignCenter);
     popup_set_text(
         app->popup,
-        "Place card on\nFlipper's back",
+        "Place tag on\nFlipper's back",
         64,
         38,
         AlignCenter,
@@ -101,7 +101,7 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
             notification_message(notifications, &sequence_blink_start_yellow);
             popup_set_text(
                 app->popup,
-                "Sensing card...",
+                "Sensing tag...",
                 64,
                 38,
                 AlignCenter,
@@ -112,7 +112,7 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
             notification_message(notifications, &sequence_blink_start_green);
             popup_set_text(
                 app->popup,
-                "Card detected!\nReading...",
+                "Tag detected!\nReading...",
                 64,
                 38,
                 AlignCenter,
@@ -124,7 +124,7 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
             notification_message(notifications, &sequence_blink_start_cyan);
             popup_set_text(
                 app->popup,
-                "Place card on\nFlipper's back",
+                "Place tag on\nFlipper's back",
                 64,
                 38,
                 AlignCenter,
@@ -134,7 +134,7 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
         case DesktopSettingsCustomEventRfidReadStartASK:
             popup_set_text(
                 app->popup,
-                "Reading ASK...\nKeep card still",
+                "Reading ASK...\nKeep tag still",
                 64,
                 38,
                 AlignCenter,
@@ -144,7 +144,7 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
         case DesktopSettingsCustomEventRfidReadStartPSK:
             popup_set_text(
                 app->popup,
-                "Reading PSK...\nKeep card still",
+                "Reading PSK...\nKeep tag still",
                 64,
                 38,
                 AlignCenter,
@@ -179,14 +179,14 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
                 furi_record_close(RECORD_NOTIFICATION);
 
                 popup_set_header(
-                    app->popup, "Card Saved!", 64, 14, AlignCenter, AlignCenter);
+                    app->popup, "Tag Saved!", 64, 14, AlignCenter, AlignCenter);
 
                 // Show the protocol name
                 static char detail_text[64];
                 snprintf(
                     detail_text,
                     sizeof(detail_text),
-                    "%s card set\nas unlock key",
+                    "%s tag set\nas unlock key",
                     protocol_name ? protocol_name : "RFID");
                 popup_set_text(
                     app->popup, detail_text, 64, 38, AlignCenter, AlignCenter);
