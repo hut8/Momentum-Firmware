@@ -8,6 +8,7 @@
 #include "../desktop.h"
 #include "../desktop_i.h"
 #include "../helpers/pin_code.h"
+#include "../helpers/card_key.h"
 #include "../animations/animation_manager.h"
 #include "../views/desktop_events.h"
 #include "../views/desktop_view_locked.h"
@@ -108,6 +109,10 @@ bool desktop_scene_locked_on_event(void* context, SceneManagerEvent event) {
             break;
         case DesktopLockedEventShowPinInput:
             scene_manager_next_scene(desktop->scene_manager, DesktopScenePinInput);
+            consumed = true;
+            break;
+        case DesktopLockedEventShowCardScan:
+            scene_manager_next_scene(desktop->scene_manager, DesktopSceneCardScan);
             consumed = true;
             break;
         case DesktopAnimationEventNewIdleAnimation:

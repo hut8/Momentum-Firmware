@@ -15,3 +15,8 @@ ADD_SCENE(desktop_settings, pin_setup_howto2, PinSetupHowto2)
 ADD_SCENE(desktop_settings, pin_setup_done, PinSetupDone)
 
 ADD_SCENE(desktop_settings, happy_mode, HappyMode)
+
+ADD_SCENE(desktop_settings, card_key_menu, CardKeyMenu)
+ADD_SCENE(desktop_settings, card_key_scan_nfc, CardKeyScanNfc)
+ADD_SCENE(desktop_settings, card_key_scan_rfid, CardKeyScanRfid)
+ADD_SCENE(desktop_settings, card_key_file, CardKeyFile)

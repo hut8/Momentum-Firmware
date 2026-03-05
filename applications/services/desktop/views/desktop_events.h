@@ -66,4 +66,11 @@ typedef enum {
     DesktopLockMenuEventLockPinOff,
     DesktopLockMenuEventMomentum,
     DesktopLockMenuEventScreenSettings,
+
+    DesktopLockedEventShowCardScan,
+    DesktopCardScanEventNfcDetected,
+    DesktopCardScanEventRfidDetected,
+    DesktopCardScanEventTimeout,
+    DesktopCardScanEventUnlocked,
+    DesktopCardScanEventFailed,
 } DesktopEvent;

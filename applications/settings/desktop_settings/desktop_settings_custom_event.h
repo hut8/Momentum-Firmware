@@ -16,6 +16,15 @@ typedef enum {
     DesktopSettingsCustomEventSetPin,
     DesktopSettingsCustomEventChangePin,
     DesktopSettingsCustomEventDisablePin,
+
+    DesktopSettingsCustomEventSetCardKey,
+    DesktopSettingsCustomEventRemoveCardKey,
+    DesktopSettingsCustomEventScanNfc,
+    DesktopSettingsCustomEventScanRfid,
+    DesktopSettingsCustomEventFileNfc,
+    DesktopSettingsCustomEventFileRfid,
+    DesktopSettingsCustomEventCardKeySaved,
+    DesktopSettingsCustomEventCardKeyFailed,
 } DesktopSettingsCustomEvent;
 
 #ifdef __cplusplus

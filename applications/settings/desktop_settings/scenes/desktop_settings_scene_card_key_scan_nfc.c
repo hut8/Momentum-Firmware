@@ -1,0 +1,111 @@
+#include <furi.h>
+#include <gui/scene_manager.h>
+#include <gui/modules/popup.h>
+#include <nfc/nfc.h>
+#include <nfc/nfc_poller.h>
+#include <nfc/protocols/nfc_protocol.h>
+#include <nfc/protocols/iso14443_3a/iso14443_3a.h>
+#include <nfc/protocols/iso14443_3a/iso14443_3a_poller.h>
+
+#include "../desktop_settings_app.h"
+#include "desktop_settings_scene.h"
+#include "../desktop_settings_custom_event.h"
+
+typedef struct {
+    Nfc* nfc;
+    NfcPoller* poller;
+} CardKeyScanNfcState;
+
+static NfcCommand desktop_settings_card_key_scan_nfc_callback(
+    NfcGenericEvent event,
+    void* context) {
+    DesktopSettingsApp* app = context;
+    NfcCommand command = NfcCommandContinue;
+
+    const Iso14443_3aPollerEvent* iso_event = event.event_data;
+    if(iso_event->type == Iso14443_3aPollerEventTypeReady) {
+        view_dispatcher_send_custom_event(
+            app->view_dispatcher, DesktopSettingsCustomEventCardKeySaved);
+        command = NfcCommandStop;
+    } else if(iso_event->type == Iso14443_3aPollerEventTypeError) {
+        command = NfcCommandReset;
+    }
+
+    return command;
+}
+
+void desktop_settings_scene_card_key_scan_nfc_on_enter(void* context) {
+    DesktopSettingsApp* app = context;
+
+    CardKeyScanNfcState* state = malloc(sizeof(CardKeyScanNfcState));
+    scene_manager_set_scene_state(
+        app->scene_manager, DesktopSettingsAppSceneCardKeyScanNfc, (uint32_t)(uintptr_t)state);
+
+    popup_set_header(app->popup, "Scan NFC Card", 64, 20, AlignCenter, AlignCenter);
+    popup_set_text(app->popup, "Present card\nto Flipper's back", 64, 40, AlignCenter, AlignCenter);
+    view_dispatcher_switch_to_view(app->view_dispatcher, DesktopSettingsAppViewIdPopup);
+
+    state->nfc = nfc_alloc();
+    state->poller = nfc_poller_alloc(state->nfc, NfcProtocolIso14443_3a);
+    nfc_poller_start(state->poller, desktop_settings_card_key_scan_nfc_callback, app);
+}
+
+bool desktop_settings_scene_card_key_scan_nfc_on_event(void* context, SceneManagerEvent event) {
+    DesktopSettingsApp* app = context;
+    bool consumed = false;
+
+    if(event.type == SceneManagerEventTypeCustom) {
+        if(event.event == DesktopSettingsCustomEventCardKeySaved) {
+            CardKeyScanNfcState* state =
+                (CardKeyScanNfcState*)(uintptr_t)scene_manager_get_scene_state(
+                    app->scene_manager, DesktopSettingsAppSceneCardKeyScanNfc);
+
+            // Extract UID from poller data (now safe - we're in the main thread and poller is stopped)
+            const NfcDeviceData* nfc_data = nfc_poller_get_data(state->poller);
+            const Iso14443_3aData* iso_data = nfc_data;
+            size_t uid_len;
+            const uint8_t* uid = iso14443_3a_get_uid(iso_data, &uid_len);
+
+            DesktopCardKey* card_key = &app->card_key_buffer;
+            card_key->type = DesktopCardKeyTypeNfc;
+            card_key->data_length =
+                uid_len > DESKTOP_CARD_KEY_DATA_MAX_LEN ? DESKTOP_CARD_KEY_DATA_MAX_LEN : uid_len;
+            memcpy(card_key->data, uid, card_key->data_length);
+            card_key->rfid_protocol = 0;
+
+            desktop_card_key_save(card_key);
+
+            popup_set_header(app->popup, "Card Saved!", 64, 20, AlignCenter, AlignCenter);
+            popup_set_text(
+                app->popup, "NFC card set\nas unlock key", 64, 40, AlignCenter, AlignCenter);
+            consumed = true;
+        }
+    } else if(event.type == SceneManagerEventTypeBack) {
+        scene_manager_previous_scene(app->scene_manager);
+        consumed = true;
+    }
+
+    return consumed;
+}
+
+void desktop_settings_scene_card_key_scan_nfc_on_exit(void* context) {
+    DesktopSettingsApp* app = context;
+
+    CardKeyScanNfcState* state = (CardKeyScanNfcState*)(uintptr_t)scene_manager_get_scene_state(
+        app->scene_manager, DesktopSettingsAppSceneCardKeyScanNfc);
+
+    if(state) {
+        if(state->poller) {
+            nfc_poller_stop(state->poller);
+            nfc_poller_free(state->poller);
+        }
+        if(state->nfc) {
+            nfc_free(state->nfc);
+        }
+        free(state);
+        scene_manager_set_scene_state(
+            app->scene_manager, DesktopSettingsAppSceneCardKeyScanNfc, 0);
+    }
+
+    popup_reset(app->popup);
+}

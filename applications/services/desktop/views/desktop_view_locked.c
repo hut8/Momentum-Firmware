@@ -41,6 +41,7 @@ typedef enum {
 
 typedef struct {
     bool pin_locked;
+    bool card_key_set;
     int8_t cover_offset;
     DesktopViewLockedState view_state;
 } DesktopViewLockedModel;
@@ -117,7 +118,10 @@ void desktop_view_locked_draw_lockscreen(Canvas* canvas, void* m) {
     if(model->view_state == DesktopViewLockedStateLockedHintShown &&
        momentum_settings.lockscreen_prompt) {
         canvas_set_font(canvas, FontSecondary);
-        if(model->pin_locked) {
+        if(model->pin_locked && model->card_key_set) {
+            elements_bubble_str(
+                canvas, 2, 14 + y, "  UP=PIN  OK=Card", AlignRight, AlignBottom);
+        } else if(model->pin_locked) {
             elements_bubble_str(
                 canvas, 12, 14 + y, "  Press   \nto unlock!", AlignRight, AlignBottom);
             canvas_draw_icon(canvas, 45, 16 + y, &I_Pin_arrow_up_7x9);
@@ -218,6 +222,7 @@ static bool desktop_view_locked_input(InputEvent* event, void* context) {
     }
     const DesktopViewLockedState view_state = model->view_state;
     const bool pin_locked = model->pin_locked;
+    const bool card_key_set = model->card_key_set;
     view_commit_model(locked_view->view, is_changed);
 
     if(view_state == DesktopViewLockedStateUnlocked) {
@@ -241,6 +246,8 @@ static bool desktop_view_locked_input(InputEvent* event, void* context) {
         if(pin_locked) {
             if(event->key == InputKeyUp) {
                 locked_view->callback(DesktopLockedEventShowPinInput, locked_view->context);
+            } else if(event->key == InputKeyOk && card_key_set) {
+                locked_view->callback(DesktopLockedEventShowCardScan, locked_view->context);
             } else {
                 locked_view->lock_count = 0;
             }
@@ -333,4 +340,11 @@ bool desktop_view_locked_is_locked_hint_visible(DesktopViewLocked* locked_view) 
     view_commit_model(locked_view->view, false);
     return view_state == DesktopViewLockedStateLockedHintShown ||
            view_state == DesktopViewLockedStateLocked;
+}
+
+void desktop_view_locked_set_card_key(DesktopViewLocked* locked_view, bool card_key_set) {
+    furi_assert(locked_view);
+    DesktopViewLockedModel* model = view_get_model(locked_view->view);
+    model->card_key_set = card_key_set;
+    view_commit_model(locked_view->view, false);
 }
