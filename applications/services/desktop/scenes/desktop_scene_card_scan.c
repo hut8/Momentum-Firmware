@@ -152,16 +152,17 @@ bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
                 lfrfid_worker_stop(state->rfid_worker);
 
                 size_t data_size = protocol_dict_get_data_size(state->rfid_dict, protocol);
-                uint8_t data_buf[DESKTOP_CARD_KEY_DATA_MAX_LEN];
-                if(data_size <= sizeof(data_buf)) {
-                    protocol_dict_get_data(
-                        state->rfid_dict, protocol, data_buf, data_size);
-                }
+                uint8_t* data_buf = malloc(data_size);
+                protocol_dict_get_data(
+                    state->rfid_dict, protocol, data_buf, data_size);
+
+                size_t cmp_size = data_size > DESKTOP_CARD_KEY_DATA_MAX_LEN ?
+                                      DESKTOP_CARD_KEY_DATA_MAX_LEN :
+                                      data_size;
 
                 NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);
-                if(data_size <= sizeof(data_buf) &&
-                   desktop_card_key_check_rfid(
-                       &state->card_key, (uint8_t)protocol, data_buf, data_size)) {
+                if(desktop_card_key_check_rfid(
+                       &state->card_key, (uint8_t)protocol, data_buf, cmp_size)) {
                     notification_message(notifications, &sequence_success);
                     furi_record_close(RECORD_NOTIFICATION);
                     desktop_unlock(desktop);
@@ -178,6 +179,7 @@ bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
                         AlignCenter,
                         AlignCenter);
                 }
+                free(data_buf);
             }
             consumed = true;
             break;

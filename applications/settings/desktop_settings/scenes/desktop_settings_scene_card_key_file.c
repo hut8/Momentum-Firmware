@@ -42,12 +42,16 @@ static bool desktop_settings_card_key_file_load_rfid(DesktopSettingsApp* app, co
     ProtocolId protocol = lfrfid_dict_file_load(dict, path);
     if(protocol != PROTOCOL_NO) {
         size_t data_size = protocol_dict_get_data_size(dict, protocol);
+        uint8_t* temp_data = malloc(data_size);
+        protocol_dict_get_data(dict, protocol, temp_data, data_size);
+
         DesktopCardKey* card_key = &app->card_key_buffer;
         card_key->type = DesktopCardKeyTypeRfid;
         card_key->rfid_protocol = (uint8_t)protocol;
         card_key->data_length =
             data_size > DESKTOP_CARD_KEY_DATA_MAX_LEN ? DESKTOP_CARD_KEY_DATA_MAX_LEN : data_size;
-        protocol_dict_get_data(dict, protocol, card_key->data, card_key->data_length);
+        memcpy(card_key->data, temp_data, card_key->data_length);
+        free(temp_data);
         success = true;
     }
 

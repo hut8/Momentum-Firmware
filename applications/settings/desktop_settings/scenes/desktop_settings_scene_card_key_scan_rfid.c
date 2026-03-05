@@ -159,14 +159,17 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
                 lfrfid_worker_stop(state->worker);
 
                 size_t data_size = protocol_dict_get_data_size(state->dict, protocol);
+                uint8_t* temp_data = malloc(data_size);
+                protocol_dict_get_data(state->dict, protocol, temp_data, data_size);
+
                 DesktopCardKey* card_key = &app->card_key_buffer;
                 card_key->type = DesktopCardKeyTypeRfid;
                 card_key->rfid_protocol = (uint8_t)protocol;
                 card_key->data_length = data_size > DESKTOP_CARD_KEY_DATA_MAX_LEN ?
                                             DESKTOP_CARD_KEY_DATA_MAX_LEN :
                                             data_size;
-                protocol_dict_get_data(
-                    state->dict, protocol, card_key->data, card_key->data_length);
+                memcpy(card_key->data, temp_data, card_key->data_length);
+                free(temp_data);
 
                 desktop_card_key_save(card_key);
 
