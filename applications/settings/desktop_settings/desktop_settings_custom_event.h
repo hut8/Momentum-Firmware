@@ -25,6 +25,14 @@ typedef enum {
     DesktopSettingsCustomEventFileRfid,
     DesktopSettingsCustomEventCardKeySaved,
     DesktopSettingsCustomEventCardKeyFailed,
+    DesktopSettingsCustomEventRfidSenseStart,
+    DesktopSettingsCustomEventRfidSenseEnd,
+    DesktopSettingsCustomEventRfidSenseCardStart,
+    DesktopSettingsCustomEventRfidSenseCardEnd,
+    DesktopSettingsCustomEventRfidReadStartASK,
+    DesktopSettingsCustomEventRfidReadStartPSK,
+    DesktopSettingsCustomEventRfidReadDone,
+    DesktopSettingsCustomEventNfcDetected,
 } DesktopSettingsCustomEvent;
 
 #ifdef __cplusplus
