@@ -15,7 +15,7 @@
 #include <desktop/desktop_keybinds.h>
 #include <desktop/desktop_keybinds_filename.h>
 #include <desktop/views/desktop_view_pin_input.h>
-#include <desktop/helpers/card_key.h>
+#include <desktop/helpers/tag_key.h>
 #include "views/desktop_settings_view_pin_setup_howto.h"
 #include "views/desktop_settings_view_pin_setup_howto2.h"
 
@@ -58,7 +58,7 @@ typedef struct {
 
     DesktopPinCode pincode_buffer;
     bool pincode_buffer_filled;
-    DesktopCardKey card_key_buffer;
+    DesktopTagKey tag_key_buffer;
 
     uint32_t pin_menu_idx;
 

@@ -12,37 +12,37 @@
 #include <toolbox/protocols/protocol_dict.h>
 
 #include "../desktop_i.h"
-#include "../helpers/card_key.h"
+#include "../helpers/tag_key.h"
 #include "desktop_scene.h"
 
-#define TAG "DesktopCardScan"
+#define TAG "DesktopTagScan"
 
-#define CARD_SCAN_TIMEOUT_MS (15000)
+#define TAG_SCAN_TIMEOUT_MS (15000)
 
 typedef struct {
     Nfc* nfc;
     NfcPoller* poller;
     ProtocolDict* rfid_dict;
     LFRFIDWorker* rfid_worker;
-    DesktopCardKey card_key;
+    DesktopTagKey tag_key;
     ProtocolId rfid_protocol_id_next; // Written by worker thread
     ProtocolId rfid_protocol_id; // Read by main thread after event
     FuriTimer* timeout_timer;
-} DesktopSceneCardScanState;
+} DesktopSceneTagScanState;
 
-static void desktop_scene_card_scan_timeout_callback(void* context) {
+static void desktop_scene_tag_scan_timeout_callback(void* context) {
     Desktop* desktop = context;
-    view_dispatcher_send_custom_event(desktop->view_dispatcher, DesktopCardScanEventTimeout);
+    view_dispatcher_send_custom_event(desktop->view_dispatcher, DesktopTagScanEventTimeout);
 }
 
-static NfcCommand desktop_scene_card_scan_nfc_callback(NfcGenericEvent event, void* context) {
+static NfcCommand desktop_scene_tag_scan_nfc_callback(NfcGenericEvent event, void* context) {
     Desktop* desktop = context;
     NfcCommand command = NfcCommandContinue;
 
     const Iso14443_3aPollerEvent* iso14443_3a_event = event.event_data;
     if(iso14443_3a_event->type == Iso14443_3aPollerEventTypeReady) {
         view_dispatcher_send_custom_event(
-            desktop->view_dispatcher, DesktopCardScanEventNfcDetected);
+            desktop->view_dispatcher, DesktopTagScanEventNfcDetected);
         command = NfcCommandStop;
     } else if(iso14443_3a_event->type == Iso14443_3aPollerEventTypeError) {
         command = NfcCommandReset;
@@ -51,35 +51,35 @@ static NfcCommand desktop_scene_card_scan_nfc_callback(NfcGenericEvent event, vo
     return command;
 }
 
-static void desktop_scene_card_scan_rfid_callback(
+static void desktop_scene_tag_scan_rfid_callback(
     LFRFIDWorkerReadResult result,
     ProtocolId protocol,
     void* context) {
     Desktop* desktop = context;
 
     if(result == LFRFIDWorkerReadDone) {
-        DesktopSceneCardScanState* state = (DesktopSceneCardScanState*)(uintptr_t)
-            scene_manager_get_scene_state(desktop->scene_manager, DesktopSceneCardScan);
+        DesktopSceneTagScanState* state = (DesktopSceneTagScanState*)(uintptr_t)
+            scene_manager_get_scene_state(desktop->scene_manager, DesktopSceneTagScan);
         if(state) {
             state->rfid_protocol_id_next = protocol;
         }
         view_dispatcher_send_custom_event(
-            desktop->view_dispatcher, DesktopCardScanEventRfidDetected);
+            desktop->view_dispatcher, DesktopTagScanEventRfidDetected);
     }
 }
 
-void desktop_scene_card_scan_on_enter(void* context) {
+void desktop_scene_tag_scan_on_enter(void* context) {
     Desktop* desktop = context;
 
-    DesktopSceneCardScanState* state = malloc(sizeof(DesktopSceneCardScanState));
-    memset(state, 0, sizeof(DesktopSceneCardScanState));
+    DesktopSceneTagScanState* state = malloc(sizeof(DesktopSceneTagScanState));
+    memset(state, 0, sizeof(DesktopSceneTagScanState));
     state->rfid_protocol_id_next = PROTOCOL_NO;
     state->rfid_protocol_id = PROTOCOL_NO;
 
     scene_manager_set_scene_state(
-        desktop->scene_manager, DesktopSceneCardScan, (uint32_t)(uintptr_t)state);
+        desktop->scene_manager, DesktopSceneTagScan, (uint32_t)(uintptr_t)state);
 
-    if(!desktop_card_key_load(&state->card_key)) {
+    if(!desktop_tag_key_load(&state->tag_key)) {
         popup_set_header(desktop->popup, "No tag set", 64, 20, AlignCenter, AlignCenter);
         popup_set_text(desktop->popup, "Set tag in\nDesktop Settings", 64, 40, AlignCenter, AlignCenter);
         view_dispatcher_switch_to_view(desktop->view_dispatcher, DesktopViewIdPopup);
@@ -91,17 +91,17 @@ void desktop_scene_card_scan_on_enter(void* context) {
     view_dispatcher_switch_to_view(desktop->view_dispatcher, DesktopViewIdPopup);
 
     state->timeout_timer = furi_timer_alloc(
-        desktop_scene_card_scan_timeout_callback, FuriTimerTypeOnce, desktop);
-    furi_timer_start(state->timeout_timer, furi_ms_to_ticks(CARD_SCAN_TIMEOUT_MS));
+        desktop_scene_tag_scan_timeout_callback, FuriTimerTypeOnce, desktop);
+    furi_timer_start(state->timeout_timer, furi_ms_to_ticks(TAG_SCAN_TIMEOUT_MS));
 
     NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);
 
-    if(state->card_key.type == DesktopCardKeyTypeNfc) {
+    if(state->tag_key.type == DesktopTagKeyTypeNfc) {
         notification_message(notifications, &sequence_blink_start_blue);
         state->nfc = nfc_alloc();
         state->poller = nfc_poller_alloc(state->nfc, NfcProtocolIso14443_3a);
-        nfc_poller_start(state->poller, desktop_scene_card_scan_nfc_callback, desktop);
-    } else if(state->card_key.type == DesktopCardKeyTypeRfid) {
+        nfc_poller_start(state->poller, desktop_scene_tag_scan_nfc_callback, desktop);
+    } else if(state->tag_key.type == DesktopTagKeyTypeRfid) {
         notification_message(notifications, &sequence_blink_start_cyan);
         state->rfid_dict = protocol_dict_alloc(lfrfid_protocols, LFRFIDProtocolMax);
         state->rfid_worker = lfrfid_worker_alloc(state->rfid_dict);
@@ -109,30 +109,30 @@ void desktop_scene_card_scan_on_enter(void* context) {
         lfrfid_worker_read_start(
             state->rfid_worker,
             LFRFIDWorkerReadTypeAuto,
-            desktop_scene_card_scan_rfid_callback,
+            desktop_scene_tag_scan_rfid_callback,
             desktop);
     }
 
     furi_record_close(RECORD_NOTIFICATION);
 }
 
-bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
+bool desktop_scene_tag_scan_on_event(void* context, SceneManagerEvent event) {
     Desktop* desktop = context;
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom) {
-        DesktopSceneCardScanState* state = (DesktopSceneCardScanState*)(uintptr_t)
-            scene_manager_get_scene_state(desktop->scene_manager, DesktopSceneCardScan);
+        DesktopSceneTagScanState* state = (DesktopSceneTagScanState*)(uintptr_t)
+            scene_manager_get_scene_state(desktop->scene_manager, DesktopSceneTagScan);
 
         switch(event.event) {
-        case DesktopCardScanEventNfcDetected: {
+        case DesktopTagScanEventNfcDetected: {
             const NfcDeviceData* nfc_data = nfc_poller_get_data(state->poller);
             const Iso14443_3aData* iso_data = nfc_data;
             size_t uid_len;
             const uint8_t* uid = iso14443_3a_get_uid(iso_data, &uid_len);
 
             NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);
-            if(desktop_card_key_check_nfc_uid(&state->card_key, uid, uid_len)) {
+            if(desktop_tag_key_check_nfc_uid(&state->tag_key, uid, uid_len)) {
                 notification_message(notifications, &sequence_success);
                 furi_record_close(RECORD_NOTIFICATION);
                 desktop_unlock(desktop);
@@ -145,7 +145,7 @@ bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
             consumed = true;
             break;
         }
-        case DesktopCardScanEventRfidDetected: {
+        case DesktopTagScanEventRfidDetected: {
             state->rfid_protocol_id = state->rfid_protocol_id_next;
             ProtocolId protocol = state->rfid_protocol_id;
             if(protocol != PROTOCOL_NO) {
@@ -156,13 +156,13 @@ bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
                 protocol_dict_get_data(
                     state->rfid_dict, protocol, data_buf, data_size);
 
-                size_t cmp_size = data_size > DESKTOP_CARD_KEY_DATA_MAX_LEN ?
-                                      DESKTOP_CARD_KEY_DATA_MAX_LEN :
+                size_t cmp_size = data_size > DESKTOP_TAG_KEY_DATA_MAX_LEN ?
+                                      DESKTOP_TAG_KEY_DATA_MAX_LEN :
                                       data_size;
 
                 NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);
-                if(desktop_card_key_check_rfid(
-                       &state->card_key, (uint8_t)protocol, data_buf, cmp_size)) {
+                if(desktop_tag_key_check_rfid(
+                       &state->tag_key, (uint8_t)protocol, data_buf, cmp_size)) {
                     notification_message(notifications, &sequence_success);
                     furi_record_close(RECORD_NOTIFICATION);
                     desktop_unlock(desktop);
@@ -184,7 +184,7 @@ bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
             consumed = true;
             break;
         }
-        case DesktopCardScanEventTimeout:
+        case DesktopTagScanEventTimeout:
             scene_manager_previous_scene(desktop->scene_manager);
             consumed = true;
             break;
@@ -199,11 +199,11 @@ bool desktop_scene_card_scan_on_event(void* context, SceneManagerEvent event) {
     return consumed;
 }
 
-void desktop_scene_card_scan_on_exit(void* context) {
+void desktop_scene_tag_scan_on_exit(void* context) {
     Desktop* desktop = context;
 
-    DesktopSceneCardScanState* state = (DesktopSceneCardScanState*)(uintptr_t)
-        scene_manager_get_scene_state(desktop->scene_manager, DesktopSceneCardScan);
+    DesktopSceneTagScanState* state = (DesktopSceneTagScanState*)(uintptr_t)
+        scene_manager_get_scene_state(desktop->scene_manager, DesktopSceneTagScan);
 
     if(state) {
         if(state->timeout_timer) {
@@ -229,7 +229,7 @@ void desktop_scene_card_scan_on_exit(void* context) {
         }
 
         free(state);
-        scene_manager_set_scene_state(desktop->scene_manager, DesktopSceneCardScan, 0);
+        scene_manager_set_scene_state(desktop->scene_manager, DesktopSceneTagScan, 0);
     }
 
     NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);

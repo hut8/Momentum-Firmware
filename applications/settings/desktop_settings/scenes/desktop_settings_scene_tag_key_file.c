@@ -12,7 +12,7 @@
 #include "desktop_settings_scene.h"
 #include "../desktop_settings_custom_event.h"
 
-static bool desktop_settings_card_key_file_load_nfc(DesktopSettingsApp* app, const char* path) {
+static bool desktop_settings_tag_key_file_load_nfc(DesktopSettingsApp* app, const char* path) {
     NfcDevice* dev = nfc_device_alloc();
     bool success = false;
 
@@ -21,12 +21,12 @@ static bool desktop_settings_card_key_file_load_nfc(DesktopSettingsApp* app, con
         const uint8_t* uid = nfc_device_get_uid(dev, &uid_len);
 
         if(uid && uid_len > 0) {
-            DesktopCardKey* card_key = &app->card_key_buffer;
-            card_key->type = DesktopCardKeyTypeNfc;
-            card_key->data_length =
-                uid_len > DESKTOP_CARD_KEY_DATA_MAX_LEN ? DESKTOP_CARD_KEY_DATA_MAX_LEN : uid_len;
-            memcpy(card_key->data, uid, card_key->data_length);
-            card_key->rfid_protocol = 0;
+            DesktopTagKey* tag_key = &app->tag_key_buffer;
+            tag_key->type = DesktopTagKeyTypeNfc;
+            tag_key->data_length =
+                uid_len > DESKTOP_TAG_KEY_DATA_MAX_LEN ? DESKTOP_TAG_KEY_DATA_MAX_LEN : uid_len;
+            memcpy(tag_key->data, uid, tag_key->data_length);
+            tag_key->rfid_protocol = 0;
             success = true;
         }
     }
@@ -35,7 +35,7 @@ static bool desktop_settings_card_key_file_load_nfc(DesktopSettingsApp* app, con
     return success;
 }
 
-static bool desktop_settings_card_key_file_load_rfid(DesktopSettingsApp* app, const char* path) {
+static bool desktop_settings_tag_key_file_load_rfid(DesktopSettingsApp* app, const char* path) {
     ProtocolDict* dict = protocol_dict_alloc(lfrfid_protocols, LFRFIDProtocolMax);
     bool success = false;
 
@@ -45,12 +45,12 @@ static bool desktop_settings_card_key_file_load_rfid(DesktopSettingsApp* app, co
         uint8_t* temp_data = malloc(data_size);
         protocol_dict_get_data(dict, protocol, temp_data, data_size);
 
-        DesktopCardKey* card_key = &app->card_key_buffer;
-        card_key->type = DesktopCardKeyTypeRfid;
-        card_key->rfid_protocol = (uint8_t)protocol;
-        card_key->data_length =
-            data_size > DESKTOP_CARD_KEY_DATA_MAX_LEN ? DESKTOP_CARD_KEY_DATA_MAX_LEN : data_size;
-        memcpy(card_key->data, temp_data, card_key->data_length);
+        DesktopTagKey* tag_key = &app->tag_key_buffer;
+        tag_key->type = DesktopTagKeyTypeRfid;
+        tag_key->rfid_protocol = (uint8_t)protocol;
+        tag_key->data_length =
+            data_size > DESKTOP_TAG_KEY_DATA_MAX_LEN ? DESKTOP_TAG_KEY_DATA_MAX_LEN : data_size;
+        memcpy(tag_key->data, temp_data, tag_key->data_length);
         free(temp_data);
         success = true;
     }
@@ -59,22 +59,22 @@ static bool desktop_settings_card_key_file_load_rfid(DesktopSettingsApp* app, co
     return success;
 }
 
-void desktop_settings_scene_card_key_file_on_enter(void* context) {
+void desktop_settings_scene_tag_key_file_on_enter(void* context) {
     DesktopSettingsApp* app = context;
 
-    uint32_t card_type = scene_manager_get_scene_state(
-        app->scene_manager, DesktopSettingsAppSceneCardKeyFile);
+    uint32_t tag_type = scene_manager_get_scene_state(
+        app->scene_manager, DesktopSettingsAppSceneTagKeyFile);
 
     DialogsFileBrowserOptions browser_options;
     FuriString* path = furi_string_alloc();
     bool file_selected = false;
 
-    if(card_type == DesktopCardKeyTypeNfc) {
+    if(tag_type == DesktopTagKeyTypeNfc) {
         dialog_file_browser_set_basic_options(&browser_options, ".nfc", NULL);
         browser_options.base_path = EXT_PATH("nfc");
         furi_string_set_str(path, browser_options.base_path);
         file_selected = dialog_file_browser_show(app->dialogs, path, path, &browser_options);
-    } else if(card_type == DesktopCardKeyTypeRfid) {
+    } else if(tag_type == DesktopTagKeyTypeRfid) {
         dialog_file_browser_set_basic_options(&browser_options, ".rfid", NULL);
         browser_options.base_path = EXT_PATH("lfrfid");
         furi_string_set_str(path, browser_options.base_path);
@@ -83,20 +83,20 @@ void desktop_settings_scene_card_key_file_on_enter(void* context) {
 
     if(file_selected) {
         bool load_success = false;
-        if(card_type == DesktopCardKeyTypeNfc) {
+        if(tag_type == DesktopTagKeyTypeNfc) {
             load_success =
-                desktop_settings_card_key_file_load_nfc(app, furi_string_get_cstr(path));
-        } else if(card_type == DesktopCardKeyTypeRfid) {
+                desktop_settings_tag_key_file_load_nfc(app, furi_string_get_cstr(path));
+        } else if(tag_type == DesktopTagKeyTypeRfid) {
             load_success =
-                desktop_settings_card_key_file_load_rfid(app, furi_string_get_cstr(path));
+                desktop_settings_tag_key_file_load_rfid(app, furi_string_get_cstr(path));
         }
 
         if(load_success) {
-            desktop_card_key_save(&app->card_key_buffer);
+            desktop_tag_key_save(&app->tag_key_buffer);
             popup_set_header(app->popup, "Tag Saved!", 64, 20, AlignCenter, AlignCenter);
             popup_set_text(
                 app->popup,
-                card_type == DesktopCardKeyTypeNfc ? "NFC tag set\nas unlock key" :
+                tag_type == DesktopTagKeyTypeNfc ? "NFC tag set\nas unlock key" :
                                                      "RFID tag set\nas unlock key",
                 64,
                 40,
@@ -116,7 +116,7 @@ void desktop_settings_scene_card_key_file_on_enter(void* context) {
     furi_string_free(path);
 }
 
-bool desktop_settings_scene_card_key_file_on_event(void* context, SceneManagerEvent event) {
+bool desktop_settings_scene_tag_key_file_on_event(void* context, SceneManagerEvent event) {
     UNUSED(context);
     UNUSED(event);
     bool consumed = false;
@@ -130,7 +130,7 @@ bool desktop_settings_scene_card_key_file_on_event(void* context, SceneManagerEv
     return consumed;
 }
 
-void desktop_settings_scene_card_key_file_on_exit(void* context) {
+void desktop_settings_scene_tag_key_file_on_exit(void* context) {
     DesktopSettingsApp* app = context;
     popup_reset(app->popup);
 }

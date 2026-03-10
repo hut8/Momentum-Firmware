@@ -16,7 +16,7 @@ ADD_SCENE(desktop_settings, pin_setup_done, PinSetupDone)
 
 ADD_SCENE(desktop_settings, happy_mode, HappyMode)
 
-ADD_SCENE(desktop_settings, card_key_menu, CardKeyMenu)
-ADD_SCENE(desktop_settings, card_key_scan_nfc, CardKeyScanNfc)
-ADD_SCENE(desktop_settings, card_key_scan_rfid, CardKeyScanRfid)
-ADD_SCENE(desktop_settings, card_key_file, CardKeyFile)
+ADD_SCENE(desktop_settings, tag_key_menu, TagKeyMenu)
+ADD_SCENE(desktop_settings, tag_key_scan_nfc, TagKeyScanNfc)
+ADD_SCENE(desktop_settings, tag_key_scan_rfid, TagKeyScanRfid)
+ADD_SCENE(desktop_settings, tag_key_file, TagKeyFile)

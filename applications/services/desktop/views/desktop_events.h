@@ -67,10 +67,10 @@ typedef enum {
     DesktopLockMenuEventMomentum,
     DesktopLockMenuEventScreenSettings,
 
-    DesktopLockedEventShowCardScan,
-    DesktopCardScanEventNfcDetected,
-    DesktopCardScanEventRfidDetected,
-    DesktopCardScanEventTimeout,
-    DesktopCardScanEventUnlocked,
-    DesktopCardScanEventFailed,
+    DesktopLockedEventShowTagScan,
+    DesktopTagScanEventNfcDetected,
+    DesktopTagScanEventRfidDetected,
+    DesktopTagScanEventTimeout,
+    DesktopTagScanEventUnlocked,
+    DesktopTagScanEventFailed,
 } DesktopEvent;

@@ -3,5 +3,5 @@
 // Instead of copying the file, can (ab)use the preprocessor to insert the source code here
 // Then, we still use the Header from original code as if nothing happened
 
-// desktop_card_key_is_set(), desktop_card_key_load(), desktop_card_key_save(), desktop_card_key_reset(), desktop_card_key_check_nfc_uid(), desktop_card_key_check_rfid()
-#include <applications/services/desktop/helpers/card_key.c>
+// desktop_tag_key_is_set(), desktop_tag_key_load(), desktop_tag_key_save(), desktop_tag_key_reset(), desktop_tag_key_check_nfc_uid(), desktop_tag_key_check_rfid()
+#include <applications/services/desktop/helpers/tag_key.c>

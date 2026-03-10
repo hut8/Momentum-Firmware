@@ -5,7 +5,7 @@
 #include "desktop_settings_scene.h"
 #include "desktop_settings_scene_i.h"
 #include "../desktop_settings_custom_event.h"
-#include <desktop/helpers/card_key.h>
+#include <desktop/helpers/tag_key.h>
 
 static void desktop_settings_scene_pin_menu_submenu_callback(void* context, uint32_t index) {
     DesktopSettingsApp* app = context;
@@ -41,18 +41,18 @@ void desktop_settings_scene_pin_menu_on_enter(void* context) {
             app);
     }
 
-    if(!desktop_card_key_is_set()) {
+    if(!desktop_tag_key_is_set()) {
         submenu_add_item(
             submenu,
             "Set Unlock Tag",
-            DesktopSettingsCustomEventSetCardKey,
+            DesktopSettingsCustomEventSetTagKey,
             desktop_settings_scene_pin_menu_submenu_callback,
             app);
     } else {
         submenu_add_item(
             submenu,
             "Remove Unlock Tag",
-            DesktopSettingsCustomEventRemoveCardKey,
+            DesktopSettingsCustomEventRemoveTagKey,
             desktop_settings_scene_pin_menu_submenu_callback,
             app);
     }
@@ -86,13 +86,13 @@ bool desktop_settings_scene_pin_menu_on_event(void* context, SceneManagerEvent e
             scene_manager_next_scene(app->scene_manager, DesktopSettingsAppScenePinAuth);
             consumed = true;
             break;
-        case DesktopSettingsCustomEventSetCardKey:
+        case DesktopSettingsCustomEventSetTagKey:
             scene_manager_next_scene(
-                app->scene_manager, DesktopSettingsAppSceneCardKeyMenu);
+                app->scene_manager, DesktopSettingsAppSceneTagKeyMenu);
             consumed = true;
             break;
-        case DesktopSettingsCustomEventRemoveCardKey:
-            desktop_card_key_reset();
+        case DesktopSettingsCustomEventRemoveTagKey:
+            desktop_tag_key_reset();
             scene_manager_previous_scene(app->scene_manager);
             scene_manager_next_scene(app->scene_manager, DesktopSettingsAppScenePinMenu);
             consumed = true;

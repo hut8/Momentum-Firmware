@@ -15,9 +15,9 @@
 typedef struct {
     Nfc* nfc;
     NfcPoller* poller;
-} CardKeyScanNfcState;
+} TagKeyScanNfcState;
 
-static NfcCommand desktop_settings_card_key_scan_nfc_callback(
+static NfcCommand desktop_settings_tag_key_scan_nfc_callback(
     NfcGenericEvent event,
     void* context) {
     DesktopSettingsApp* app = context;
@@ -35,12 +35,12 @@ static NfcCommand desktop_settings_card_key_scan_nfc_callback(
     return command;
 }
 
-void desktop_settings_scene_card_key_scan_nfc_on_enter(void* context) {
+void desktop_settings_scene_tag_key_scan_nfc_on_enter(void* context) {
     DesktopSettingsApp* app = context;
 
-    CardKeyScanNfcState* state = malloc(sizeof(CardKeyScanNfcState));
+    TagKeyScanNfcState* state = malloc(sizeof(TagKeyScanNfcState));
     scene_manager_set_scene_state(
-        app->scene_manager, DesktopSettingsAppSceneCardKeyScanNfc, (uint32_t)(uintptr_t)state);
+        app->scene_manager, DesktopSettingsAppSceneTagKeyScanNfc, (uint32_t)(uintptr_t)state);
 
     popup_set_header(app->popup, "Scanning NFC", 64, 14, AlignCenter, AlignCenter);
     popup_set_text(
@@ -58,18 +58,18 @@ void desktop_settings_scene_card_key_scan_nfc_on_enter(void* context) {
 
     state->nfc = nfc_alloc();
     state->poller = nfc_poller_alloc(state->nfc, NfcProtocolIso14443_3a);
-    nfc_poller_start(state->poller, desktop_settings_card_key_scan_nfc_callback, app);
+    nfc_poller_start(state->poller, desktop_settings_tag_key_scan_nfc_callback, app);
 }
 
-bool desktop_settings_scene_card_key_scan_nfc_on_event(void* context, SceneManagerEvent event) {
+bool desktop_settings_scene_tag_key_scan_nfc_on_event(void* context, SceneManagerEvent event) {
     DesktopSettingsApp* app = context;
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == DesktopSettingsCustomEventNfcDetected) {
-            CardKeyScanNfcState* state =
-                (CardKeyScanNfcState*)(uintptr_t)scene_manager_get_scene_state(
-                    app->scene_manager, DesktopSettingsAppSceneCardKeyScanNfc);
+            TagKeyScanNfcState* state =
+                (TagKeyScanNfcState*)(uintptr_t)scene_manager_get_scene_state(
+                    app->scene_manager, DesktopSettingsAppSceneTagKeyScanNfc);
 
             // Extract UID — poller has stopped, safe to read from main thread
             const NfcDeviceData* nfc_data = nfc_poller_get_data(state->poller);
@@ -77,14 +77,14 @@ bool desktop_settings_scene_card_key_scan_nfc_on_event(void* context, SceneManag
             size_t uid_len;
             const uint8_t* uid = iso14443_3a_get_uid(iso_data, &uid_len);
 
-            DesktopCardKey* card_key = &app->card_key_buffer;
-            card_key->type = DesktopCardKeyTypeNfc;
-            card_key->data_length =
-                uid_len > DESKTOP_CARD_KEY_DATA_MAX_LEN ? DESKTOP_CARD_KEY_DATA_MAX_LEN : uid_len;
-            memcpy(card_key->data, uid, card_key->data_length);
-            card_key->rfid_protocol = 0;
+            DesktopTagKey* tag_key = &app->tag_key_buffer;
+            tag_key->type = DesktopTagKeyTypeNfc;
+            tag_key->data_length =
+                uid_len > DESKTOP_TAG_KEY_DATA_MAX_LEN ? DESKTOP_TAG_KEY_DATA_MAX_LEN : uid_len;
+            memcpy(tag_key->data, uid, tag_key->data_length);
+            tag_key->rfid_protocol = 0;
 
-            desktop_card_key_save(card_key);
+            desktop_tag_key_save(tag_key);
 
             NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);
             notification_message(notifications, &sequence_success);
@@ -93,12 +93,12 @@ bool desktop_settings_scene_card_key_scan_nfc_on_event(void* context, SceneManag
             // Format UID for display
             static char uid_str[48];
             size_t offset = 0;
-            for(size_t i = 0; i < card_key->data_length && offset < sizeof(uid_str) - 4; i++) {
+            for(size_t i = 0; i < tag_key->data_length && offset < sizeof(uid_str) - 4; i++) {
                 if(i > 0) {
                     uid_str[offset++] = ':';
                 }
                 offset += snprintf(
-                    uid_str + offset, sizeof(uid_str) - offset, "%02X", card_key->data[i]);
+                    uid_str + offset, sizeof(uid_str) - offset, "%02X", tag_key->data[i]);
             }
 
             static char detail_text[80];
@@ -116,11 +116,11 @@ bool desktop_settings_scene_card_key_scan_nfc_on_event(void* context, SceneManag
     return consumed;
 }
 
-void desktop_settings_scene_card_key_scan_nfc_on_exit(void* context) {
+void desktop_settings_scene_tag_key_scan_nfc_on_exit(void* context) {
     DesktopSettingsApp* app = context;
 
-    CardKeyScanNfcState* state = (CardKeyScanNfcState*)(uintptr_t)scene_manager_get_scene_state(
-        app->scene_manager, DesktopSettingsAppSceneCardKeyScanNfc);
+    TagKeyScanNfcState* state = (TagKeyScanNfcState*)(uintptr_t)scene_manager_get_scene_state(
+        app->scene_manager, DesktopSettingsAppSceneTagKeyScanNfc);
 
     if(state) {
         if(state->poller) {
@@ -132,7 +132,7 @@ void desktop_settings_scene_card_key_scan_nfc_on_exit(void* context) {
         }
         free(state);
         scene_manager_set_scene_state(
-            app->scene_manager, DesktopSettingsAppSceneCardKeyScanNfc, 0);
+            app->scene_manager, DesktopSettingsAppSceneTagKeyScanNfc, 0);
     }
 
     NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);

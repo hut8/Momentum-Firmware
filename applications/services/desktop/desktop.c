@@ -12,7 +12,7 @@
 
 #include "scenes/desktop_scene.h"
 #include "scenes/desktop_scene_locked.h"
-#include "helpers/card_key.h"
+#include "helpers/tag_key.h"
 
 #define TAG "Desktop"
 
@@ -241,7 +241,7 @@ static void desktop_apply_settings(Desktop* desktop) {
     desktop->in_transition = true;
 
     desktop_clock_reconfigure(desktop);
-    desktop_view_locked_set_card_key(desktop->locked_view, desktop_card_key_is_set());
+    desktop_view_locked_set_tag_key(desktop->locked_view, desktop_tag_key_is_set());
 
     if(!desktop->app_running && !desktop->locked) {
         desktop_auto_lock_arm(desktop);

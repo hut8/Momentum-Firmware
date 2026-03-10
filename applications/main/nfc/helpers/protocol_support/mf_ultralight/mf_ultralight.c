@@ -15,8 +15,8 @@ enum {
     SubmenuIndexUnlockByReader,
     SubmenuIndexUnlockByPassword,
     SubmenuIndexDictAttack,
-    SubmenuIndexWriteKeepKey, // ULC: write data pages, keep target card's existing key
-    SubmenuIndexWriteCopyKey, // ULC: write all pages including key from source card
+    SubmenuIndexWriteKeepKey, // ULC: write data pages, keep target tag's existing key
+    SubmenuIndexWriteCopyKey, // ULC: write all pages including key from source tag
 };
 
 enum {
@@ -221,7 +221,7 @@ static void nfc_scene_read_and_saved_menu_on_enter_mf_ultralight(NfcApp* instanc
         submenu_remove_item(submenu, SubmenuIndexCommonWrite);
     } else if(data->type == MfUltralightTypeMfulC) {
         // Replace the generic Write item with two ULC-specific options so the user
-        // can choose whether to keep or overwrite the target card's 3DES key.
+        // can choose whether to keep or overwrite the target tag's 3DES key.
         // This avoids any mid-write dialog/view-switching complexity entirely.
         submenu_remove_item(submenu, SubmenuIndexCommonWrite);
         submenu_add_item(
@@ -343,7 +343,7 @@ static NfcCommand
         view_dispatcher_send_custom_event(instance->view_dispatcher, NfcCustomEventCardDetected);
     } else if(mf_ultralight_event->type == MfUltralightPollerEventTypeAuthRequest) {
         // Skip auth during the read phase of write - we'll authenticate
-        // against the target card in RequestWriteData using source key or dict attack
+        // against the target tag in RequestWriteData using source key or dict attack
         mf_ultralight_event->data->auth_context.skip_auth = true;
     } else if(mf_ultralight_event->type == MfUltralightPollerEventTypeRequestKey) {
         // Dict attack key provider - user dict first, then system dict
@@ -499,7 +499,7 @@ static void nfc_scene_write_on_enter_mf_ultralight(NfcApp* instance) {
     }
     instance->mf_ultralight_c_dict_context.dict = NULL;
     instance->mf_ultralight_c_write_context.dict_state = NfcMfUltralightCWriteDictIdle;
-    furi_string_set(instance->text_box_store, "\nApply the\ntarget\ncard now");
+    furi_string_set(instance->text_box_store, "\nApply the\ntarget\ntag now");
     instance->poller = nfc_poller_alloc(instance->nfc, NfcProtocolMfUltralight);
     nfc_poller_start(instance->poller, nfc_scene_write_poller_callback_mf_ultralight, instance);
 }

@@ -15,9 +15,9 @@ typedef struct {
     LFRFIDWorker* worker;
     ProtocolId protocol_id_next; // Written by worker thread
     ProtocolId protocol_id; // Read by main thread after event
-} CardKeyScanRfidState;
+} TagKeyScanRfidState;
 
-static void desktop_settings_card_key_scan_rfid_callback(
+static void desktop_settings_tag_key_scan_rfid_callback(
     LFRFIDWorkerReadResult result,
     ProtocolId protocol,
     void* context) {
@@ -28,15 +28,15 @@ static void desktop_settings_card_key_scan_rfid_callback(
         event = DesktopSettingsCustomEventRfidSenseStart;
     } else if(result == LFRFIDWorkerReadSenseEnd) {
         event = DesktopSettingsCustomEventRfidSenseEnd;
-    } else if(result == LFRFIDWorkerReadSenseCardStart) {
-        event = DesktopSettingsCustomEventRfidSenseCardStart;
-    } else if(result == LFRFIDWorkerReadSenseCardEnd) {
-        event = DesktopSettingsCustomEventRfidSenseCardEnd;
+    } else if(result == LFRFIDWorkerReadSenseTagStart) {
+        event = DesktopSettingsCustomEventRfidSenseTagStart;
+    } else if(result == LFRFIDWorkerReadSenseTagEnd) {
+        event = DesktopSettingsCustomEventRfidSenseTagEnd;
     } else if(result == LFRFIDWorkerReadDone) {
         // Store protocol_id_next from worker thread — main thread reads it after event
-        CardKeyScanRfidState* state =
-            (CardKeyScanRfidState*)(uintptr_t)scene_manager_get_scene_state(
-                app->scene_manager, DesktopSettingsAppSceneCardKeyScanRfid);
+        TagKeyScanRfidState* state =
+            (TagKeyScanRfidState*)(uintptr_t)scene_manager_get_scene_state(
+                app->scene_manager, DesktopSettingsAppSceneTagKeyScanRfid);
         if(state) {
             state->protocol_id_next = protocol;
         }
@@ -52,14 +52,14 @@ static void desktop_settings_card_key_scan_rfid_callback(
     view_dispatcher_send_custom_event(app->view_dispatcher, event);
 }
 
-void desktop_settings_scene_card_key_scan_rfid_on_enter(void* context) {
+void desktop_settings_scene_tag_key_scan_rfid_on_enter(void* context) {
     DesktopSettingsApp* app = context;
 
-    CardKeyScanRfidState* state = malloc(sizeof(CardKeyScanRfidState));
+    TagKeyScanRfidState* state = malloc(sizeof(TagKeyScanRfidState));
     state->protocol_id_next = PROTOCOL_NO;
     state->protocol_id = PROTOCOL_NO;
     scene_manager_set_scene_state(
-        app->scene_manager, DesktopSettingsAppSceneCardKeyScanRfid, (uint32_t)(uintptr_t)state);
+        app->scene_manager, DesktopSettingsAppSceneTagKeyScanRfid, (uint32_t)(uintptr_t)state);
 
     popup_set_header(app->popup, "Scanning RFID", 64, 14, AlignCenter, AlignCenter);
     popup_set_text(
@@ -81,18 +81,18 @@ void desktop_settings_scene_card_key_scan_rfid_on_enter(void* context) {
     lfrfid_worker_read_start(
         state->worker,
         LFRFIDWorkerReadTypeAuto,
-        desktop_settings_card_key_scan_rfid_callback,
+        desktop_settings_tag_key_scan_rfid_callback,
         app);
 }
 
-bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneManagerEvent event) {
+bool desktop_settings_scene_tag_key_scan_rfid_on_event(void* context, SceneManagerEvent event) {
     DesktopSettingsApp* app = context;
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom) {
-        CardKeyScanRfidState* state =
-            (CardKeyScanRfidState*)(uintptr_t)scene_manager_get_scene_state(
-                app->scene_manager, DesktopSettingsAppSceneCardKeyScanRfid);
+        TagKeyScanRfidState* state =
+            (TagKeyScanRfidState*)(uintptr_t)scene_manager_get_scene_state(
+                app->scene_manager, DesktopSettingsAppSceneTagKeyScanRfid);
 
         NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);
 
@@ -108,7 +108,7 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
                 AlignCenter);
             consumed = true;
             break;
-        case DesktopSettingsCustomEventRfidSenseCardStart:
+        case DesktopSettingsCustomEventRfidSenseTagStart:
             notification_message(notifications, &sequence_blink_start_green);
             popup_set_text(
                 app->popup,
@@ -120,7 +120,7 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
             consumed = true;
             break;
         case DesktopSettingsCustomEventRfidSenseEnd:
-        case DesktopSettingsCustomEventRfidSenseCardEnd:
+        case DesktopSettingsCustomEventRfidSenseTagEnd:
             notification_message(notifications, &sequence_blink_start_cyan);
             popup_set_text(
                 app->popup,
@@ -162,16 +162,16 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
                 uint8_t* temp_data = malloc(data_size);
                 protocol_dict_get_data(state->dict, protocol, temp_data, data_size);
 
-                DesktopCardKey* card_key = &app->card_key_buffer;
-                card_key->type = DesktopCardKeyTypeRfid;
-                card_key->rfid_protocol = (uint8_t)protocol;
-                card_key->data_length = data_size > DESKTOP_CARD_KEY_DATA_MAX_LEN ?
-                                            DESKTOP_CARD_KEY_DATA_MAX_LEN :
+                DesktopTagKey* tag_key = &app->tag_key_buffer;
+                tag_key->type = DesktopTagKeyTypeRfid;
+                tag_key->rfid_protocol = (uint8_t)protocol;
+                tag_key->data_length = data_size > DESKTOP_TAG_KEY_DATA_MAX_LEN ?
+                                            DESKTOP_TAG_KEY_DATA_MAX_LEN :
                                             data_size;
-                memcpy(card_key->data, temp_data, card_key->data_length);
+                memcpy(tag_key->data, temp_data, tag_key->data_length);
                 free(temp_data);
 
-                desktop_card_key_save(card_key);
+                desktop_tag_key_save(tag_key);
 
                 const char* protocol_name =
                     protocol_dict_get_name(state->dict, protocol);
@@ -210,12 +210,12 @@ bool desktop_settings_scene_card_key_scan_rfid_on_event(void* context, SceneMana
     return consumed;
 }
 
-void desktop_settings_scene_card_key_scan_rfid_on_exit(void* context) {
+void desktop_settings_scene_tag_key_scan_rfid_on_exit(void* context) {
     DesktopSettingsApp* app = context;
 
-    CardKeyScanRfidState* state =
-        (CardKeyScanRfidState*)(uintptr_t)scene_manager_get_scene_state(
-            app->scene_manager, DesktopSettingsAppSceneCardKeyScanRfid);
+    TagKeyScanRfidState* state =
+        (TagKeyScanRfidState*)(uintptr_t)scene_manager_get_scene_state(
+            app->scene_manager, DesktopSettingsAppSceneTagKeyScanRfid);
 
     if(state) {
         if(state->worker) {
@@ -228,7 +228,7 @@ void desktop_settings_scene_card_key_scan_rfid_on_exit(void* context) {
         }
         free(state);
         scene_manager_set_scene_state(
-            app->scene_manager, DesktopSettingsAppSceneCardKeyScanRfid, 0);
+            app->scene_manager, DesktopSettingsAppSceneTagKeyScanRfid, 0);
     }
 
     NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);

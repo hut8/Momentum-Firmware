@@ -8,7 +8,7 @@
 #include "../desktop.h"
 #include "../desktop_i.h"
 #include "../helpers/pin_code.h"
-#include "../helpers/card_key.h"
+#include "../helpers/tag_key.h"
 #include "../animations/animation_manager.h"
 #include "../views/desktop_events.h"
 #include "../views/desktop_view_locked.h"
@@ -111,8 +111,8 @@ bool desktop_scene_locked_on_event(void* context, SceneManagerEvent event) {
             scene_manager_next_scene(desktop->scene_manager, DesktopScenePinInput);
             consumed = true;
             break;
-        case DesktopLockedEventShowCardScan:
-            scene_manager_next_scene(desktop->scene_manager, DesktopSceneCardScan);
+        case DesktopLockedEventShowTagScan:
+            scene_manager_next_scene(desktop->scene_manager, DesktopSceneTagScan);
             consumed = true;
             break;
         case DesktopAnimationEventNewIdleAnimation:
