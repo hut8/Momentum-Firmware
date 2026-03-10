@@ -15,7 +15,13 @@ typedef struct {
     LFRFIDWorker* worker;
     ProtocolId protocol_id_next; // Written by worker thread
     ProtocolId protocol_id; // Read by main thread after event
+    bool done;
 } TagKeyScanRfidState;
+
+static void tag_key_scan_rfid_timeout_callback(void* context) {
+    DesktopSettingsApp* app = context;
+    view_dispatcher_send_custom_event(app->view_dispatcher, DesktopSettingsCustomEventDone);
+}
 
 static void desktop_settings_tag_key_scan_rfid_callback(
     LFRFIDWorkerReadResult result,
@@ -28,9 +34,9 @@ static void desktop_settings_tag_key_scan_rfid_callback(
         event = DesktopSettingsCustomEventRfidSenseStart;
     } else if(result == LFRFIDWorkerReadSenseEnd) {
         event = DesktopSettingsCustomEventRfidSenseEnd;
-    } else if(result == LFRFIDWorkerReadSenseTagStart) {
+    } else if(result == LFRFIDWorkerReadSenseCardStart) {
         event = DesktopSettingsCustomEventRfidSenseTagStart;
-    } else if(result == LFRFIDWorkerReadSenseTagEnd) {
+    } else if(result == LFRFIDWorkerReadSenseCardEnd) {
         event = DesktopSettingsCustomEventRfidSenseTagEnd;
     } else if(result == LFRFIDWorkerReadDone) {
         // Store protocol_id_next from worker thread — main thread reads it after event
@@ -90,9 +96,17 @@ bool desktop_settings_scene_tag_key_scan_rfid_on_event(void* context, SceneManag
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom) {
+        if(event.event == DesktopSettingsCustomEventDone) {
+            scene_manager_previous_scene(app->scene_manager);
+            return true;
+        }
+
         TagKeyScanRfidState* state =
             (TagKeyScanRfidState*)(uintptr_t)scene_manager_get_scene_state(
                 app->scene_manager, DesktopSettingsAppSceneTagKeyScanRfid);
+
+        // Ignore stale worker events after successful read
+        if(state->done) return true;
 
         NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);
 
@@ -156,6 +170,7 @@ bool desktop_settings_scene_tag_key_scan_rfid_on_event(void* context, SceneManag
             state->protocol_id = protocol;
 
             if(protocol != PROTOCOL_NO) {
+                state->done = true;
                 lfrfid_worker_stop(state->worker);
 
                 size_t data_size = protocol_dict_get_data_size(state->dict, protocol);
@@ -176,10 +191,8 @@ bool desktop_settings_scene_tag_key_scan_rfid_on_event(void* context, SceneManag
                 const char* protocol_name =
                     protocol_dict_get_name(state->dict, protocol);
 
-                NotificationApp* notifications =
-                    furi_record_open(RECORD_NOTIFICATION);
+                notification_message(notifications, &sequence_blink_stop);
                 notification_message(notifications, &sequence_success);
-                furi_record_close(RECORD_NOTIFICATION);
 
                 popup_set_header(
                     app->popup, "Tag Saved!", 64, 14, AlignCenter, AlignCenter);
@@ -193,6 +206,11 @@ bool desktop_settings_scene_tag_key_scan_rfid_on_event(void* context, SceneManag
                     protocol_name ? protocol_name : "RFID");
                 popup_set_text(
                     app->popup, detail_text, 64, 38, AlignCenter, AlignCenter);
+
+                popup_set_context(app->popup, app);
+                popup_set_callback(app->popup, tag_key_scan_rfid_timeout_callback);
+                popup_set_timeout(app->popup, 5000);
+                popup_enable_timeout(app->popup);
             }
             consumed = true;
             break;

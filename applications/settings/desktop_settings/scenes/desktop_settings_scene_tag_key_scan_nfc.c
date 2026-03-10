@@ -15,7 +15,13 @@
 typedef struct {
     Nfc* nfc;
     NfcPoller* poller;
+    bool done;
 } TagKeyScanNfcState;
+
+static void tag_key_scan_nfc_timeout_callback(void* context) {
+    DesktopSettingsApp* app = context;
+    view_dispatcher_send_custom_event(app->view_dispatcher, DesktopSettingsCustomEventDone);
+}
 
 static NfcCommand desktop_settings_tag_key_scan_nfc_callback(
     NfcGenericEvent event,
@@ -86,7 +92,10 @@ bool desktop_settings_scene_tag_key_scan_nfc_on_event(void* context, SceneManage
 
             desktop_tag_key_save(tag_key);
 
+            state->done = true;
+
             NotificationApp* notifications = furi_record_open(RECORD_NOTIFICATION);
+            notification_message(notifications, &sequence_blink_stop);
             notification_message(notifications, &sequence_success);
             furi_record_close(RECORD_NOTIFICATION);
 
@@ -106,6 +115,15 @@ bool desktop_settings_scene_tag_key_scan_nfc_on_event(void* context, SceneManage
 
             popup_set_header(app->popup, "NFC Tag Saved!", 64, 14, AlignCenter, AlignCenter);
             popup_set_text(app->popup, detail_text, 64, 38, AlignCenter, AlignCenter);
+
+            popup_set_context(app->popup, app);
+            popup_set_callback(app->popup, tag_key_scan_nfc_timeout_callback);
+            popup_set_timeout(app->popup, 5000);
+            popup_enable_timeout(app->popup);
+            consumed = true;
+        }
+        if(event.event == DesktopSettingsCustomEventDone) {
+            scene_manager_previous_scene(app->scene_manager);
             consumed = true;
         }
     } else if(event.type == SceneManagerEventTypeBack) {
