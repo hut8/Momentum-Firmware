@@ -8,7 +8,6 @@
 #include "../desktop.h"
 #include "../desktop_i.h"
 #include "../helpers/pin_code.h"
-#include "../helpers/tag_key.h"
 #include "../animations/animation_manager.h"
 #include "../views/desktop_events.h"
 #include "../views/desktop_view_locked.h"
@@ -112,7 +111,7 @@ bool desktop_scene_locked_on_event(void* context, SceneManagerEvent event) {
             consumed = true;
             break;
         case DesktopLockedEventShowTagScan:
-            scene_manager_next_scene(desktop->scene_manager, DesktopSceneTagScan);
+            loader_start_detached_with_gui_error(desktop->loader, "Tag Scanner", NULL);
             consumed = true;
             break;
         case DesktopAnimationEventNewIdleAnimation:

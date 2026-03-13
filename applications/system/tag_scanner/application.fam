@@ -1,0 +1,12 @@
+App(
+    appid="tag_scanner",
+    name="Tag Scanner",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="tag_scanner_app",
+    requires=[
+        "desktop",
+        "gui",
+    ],
+    stack_size=2 * 1024,
+    fap_category="assets",
+)
