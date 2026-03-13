@@ -110,6 +110,10 @@ bool desktop_scene_locked_on_event(void* context, SceneManagerEvent event) {
             scene_manager_next_scene(desktop->scene_manager, DesktopScenePinInput);
             consumed = true;
             break;
+        case DesktopLockedEventShowTagScan:
+            loader_start_detached_with_gui_error(desktop->loader, "Tag Scanner", NULL);
+            consumed = true;
+            break;
         case DesktopAnimationEventNewIdleAnimation:
             animation_manager_new_idle_process(desktop->animation_manager);
             consumed = true;

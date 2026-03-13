@@ -5,6 +5,7 @@
 #include "desktop_settings_scene.h"
 #include "desktop_settings_scene_i.h"
 #include "../desktop_settings_custom_event.h"
+#include <desktop/helpers/tag_key.h>
 
 static void desktop_settings_scene_pin_menu_submenu_callback(void* context, uint32_t index) {
     DesktopSettingsApp* app = context;
@@ -40,7 +41,23 @@ void desktop_settings_scene_pin_menu_on_enter(void* context) {
             app);
     }
 
-    submenu_set_header(app->submenu, "PIN Code Settings");
+    if(!desktop_tag_key_is_set()) {
+        submenu_add_item(
+            submenu,
+            "Set Unlock Tag",
+            DesktopSettingsCustomEventSetTagKey,
+            desktop_settings_scene_pin_menu_submenu_callback,
+            app);
+    } else {
+        submenu_add_item(
+            submenu,
+            "Remove Unlock Tag",
+            DesktopSettingsCustomEventRemoveTagKey,
+            desktop_settings_scene_pin_menu_submenu_callback,
+            app);
+    }
+
+    submenu_set_header(app->submenu, "Lock Setup");
     submenu_set_selected_item(app->submenu, app->pin_menu_idx);
     view_dispatcher_switch_to_view(app->view_dispatcher, DesktopSettingsAppViewMenu);
 }
@@ -67,6 +84,17 @@ bool desktop_settings_scene_pin_menu_on_event(void* context, SceneManagerEvent e
             scene_manager_set_scene_state(
                 app->scene_manager, DesktopSettingsAppScenePinAuth, SCENE_STATE_PIN_AUTH_DISABLE);
             scene_manager_next_scene(app->scene_manager, DesktopSettingsAppScenePinAuth);
+            consumed = true;
+            break;
+        case DesktopSettingsCustomEventSetTagKey:
+            scene_manager_next_scene(
+                app->scene_manager, DesktopSettingsAppSceneTagKeyMenu);
+            consumed = true;
+            break;
+        case DesktopSettingsCustomEventRemoveTagKey:
+            desktop_tag_key_reset();
+            scene_manager_previous_scene(app->scene_manager);
+            scene_manager_next_scene(app->scene_manager, DesktopSettingsAppScenePinMenu);
             consumed = true;
             break;
         default:
